@@ -10,13 +10,12 @@ dependencies = [
     "httpx",
     "fastmcp",
 ]
-
-[project.scripts]
-mcp-brave-search = "brave_search_mcp.server:main"
-
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
+
+[project.scripts]
+mcp-brave-search = "mcp_brave_search.server:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
