@@ -2,6 +2,7 @@ from mcp.server.fastmcp import FastMCP
 import httpx
 import time
 import asyncio
+import logging
 from typing import Optional, Dict, List, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -9,9 +10,23 @@ import os
 import sys
 import io
 
+# Import version from package
+from mcp_brave_search import __version__
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('mcp-brave-search')
+
+# Check for API key
 api_key = os.getenv("BRAVE_API_KEY")
 if not api_key:
+    logger.error("BRAVE_API_KEY environment variable required")
     raise ValueError("BRAVE_API_KEY environment variable required")
+else:
+    logger.info(f"BRAVE_API_KEY found with length: {len(api_key)}")
 
 class RateLimitError(Exception):
     pass
@@ -71,9 +86,11 @@ class BraveSearchServer:
     async def _get_web_results(self, query: str, min_results: int) -> List[Dict]:
         """Fetch web results with pagination until minimum count is reached"""
         client = self.get_client()
-        self.rate_limit.check()
         
         try:
+            self.rate_limit.check()
+            logger.info(f"Executing web search query: '{query}' with count: {min_results}")
+            
             # Make a single request with the maximum allowed count
             response = await client.get(
                 f"{self.base_url}/web/search",
@@ -85,21 +102,41 @@ class BraveSearchServer:
             response.raise_for_status()
             data = response.json()
             results = data.get("web", {}).get("results", [])
+            logger.info(f"Web search returned {len(results)} results")
             return results
+            
+        except RateLimitError as e:
+            logger.warning(f"Rate limit exceeded: {str(e)}")
+            return [{"title": "Rate Limit Exceeded", 
+                   "description": "The search could not be completed due to rate limiting. Please try again later.", 
+                   "url": "#"}]
+            
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 422:
                 # If we get a 422, try with a smaller count
-                response = await client.get(
-                    f"{self.base_url}/web/search",
-                    params={
-                        "q": query,
-                        "count": 10  # Fall back to smaller count
-                    }
-                )
-                response.raise_for_status()
-                data = response.json()
-                return data.get("web", {}).get("results", [])
-            raise  # Re-raise other HTTP errors
+                logger.warning(f"Received 422 error, retrying with smaller count: {str(e)}")
+                try:
+                    response = await client.get(
+                        f"{self.base_url}/web/search",
+                        params={
+                            "q": query,
+                            "count": 10  # Fall back to smaller count
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    results = data.get("web", {}).get("results", [])
+                    logger.info(f"Retry web search returned {len(results)} results")
+                    return results
+                except Exception as retry_error:
+                    logger.error(f"Retry failed with error: {str(retry_error)}")
+                    return []
+            logger.error(f"HTTP error in web search: {e.response.status_code} - {str(e)}")
+            return []
+            
+        except Exception as e:
+            logger.error(f"Unexpected error in web search: {str(e)}")
+            return []
 
     def _format_web_results(self, data: Dict, min_results: int = 10) -> str:
         """Format web search results with enhanced information"""
@@ -165,10 +202,10 @@ class BraveSearchServer:
             
             return "\n\n".join(formatted_results)
 
-        @self.mcp.tool() 
+        @self.mcp.tool()
         async def brave_local_search(
             query: str,
-            count: Optional[int] = 20  # Changed default from 5 to 20
+            count: Optional[int] = 20
         ) -> str:
             """Search for local businesses and places
             
@@ -304,13 +341,19 @@ class BraveSearchServer:
 
     def run(self):
         """Start the MCP server"""
+        logger.info(f"Starting MCP Brave Search server v{__version__}")
         self.mcp.run()
 
 
 def main():
     """Entry point for the MCP Brave Search server"""
-    server = BraveSearchServer(api_key)
-    server.run()
+    try:
+        logger.info("Initializing MCP Brave Search server")
+        server = BraveSearchServer(api_key)
+        server.run()
+    except Exception as e:
+        logger.error(f"Failed to start server: {str(e)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

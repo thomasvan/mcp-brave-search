@@ -90,6 +90,45 @@ To make changes to the project:
    ```
 3. Restart the server to apply changes.
 
+## Testing
+
+The project includes both unit tests and integration tests:
+
+### Installing Test Dependencies
+
+```bash
+uv pip install pytest pytest-asyncio pytest-cov
+```
+
+### Running Unit Tests
+
+Unit tests can be run without an API key and use mocks to simulate API responses:
+
+```bash
+# Run all unit tests
+python -m pytest tests/unit/
+
+# Run with verbose output
+python -m pytest tests/unit/ -v
+```
+
+### Running Integration Tests
+
+Integration tests require a valid Brave API key and make real API calls:
+
+```bash
+# Run integration tests with your API key
+BRAVE_API_KEY_INTEGRATION="your_api_key_here" python -m pytest tests/integration/ -v
+```
+
+### Test Coverage
+
+To check test coverage:
+
+```bash
+python -m pytest --cov=src/mcp_brave_search
+```
+
 ## Troubleshooting
 
 If you encounter any issues:

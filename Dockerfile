@@ -30,7 +30,6 @@ FROM python:3.13-slim-bookworm
 WORKDIR /app
 
 # Copy the virtual environment and source code from the builder stage
-# COPY --from=uv /root/.local /root/.local
 COPY --from=uv --chown=app:app /app/.venv /app/.venv
 
 # Set PATH to use virtual environment by default
