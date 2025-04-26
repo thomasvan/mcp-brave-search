@@ -50,7 +50,7 @@ npx -y @smithery/cli install @thomasvan/mcp-brave-search --client claude
          "command": "uv",
          "args": [
            "--directory",
-           "path-to\\mcp-python\\brave-mcp-search\\src",
+           "path-to\\mcp-python\\mcp-brave-search\\src",
            "run",
            "server.py"
          ],
