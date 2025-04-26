@@ -22,8 +22,8 @@ npx -y @smithery/cli install @thomasvan/mcp-brave-search --client claude
 ### Manual Installation
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/brave-search-mcp.git
-   cd brave-search-mcp
+   git clone https://github.com/thomasvan/mcp-brave-search.git
+   cd mcp-brave-search
    ```
 
 2. Create a virtual environment and install dependencies using uv:
