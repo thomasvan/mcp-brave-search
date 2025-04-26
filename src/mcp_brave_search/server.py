@@ -306,7 +306,12 @@ class BraveSearchServer:
         """Start the MCP server"""
         self.mcp.run()
 
-if __name__ == "__main__":
-    
+
+def main():
+    """Entry point for the MCP Brave Search server"""
     server = BraveSearchServer(api_key)
     server.run()
+
+
+if __name__ == "__main__":
+    main()
