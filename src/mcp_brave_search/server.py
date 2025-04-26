@@ -174,7 +174,7 @@ class BraveSearchServer:
             
             Args:
                 query: Location terms
-                count: Results (1-20
+                count: Desired number of results (10-20)
             """
             self.rate_limit.check()
 
